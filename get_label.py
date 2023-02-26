@@ -89,8 +89,8 @@ class Data_Finder(data.Dataset):
             target = self.target_transform(target, width, height)
         return torch.from_numpy(img).permute(2, 0, 1), target, Mask, height, width, num_crowds, file_name, Cat
 
-img_path_older = '/content/DATA/older_Data/images'
-annotation_path = '/content/drive/MyDrive/Study/Domain_Adaptation_Vessel/older_vessel/simulated_corrosion_multi_class_no_morph_1.json'
+img_path_older = '/home/inspectrone/Jay/DATA/older_Data/images'
+annotation_path = '/home/inspectrone/Jay/DATA/older_Data/simulated_corrosion_multi_class_no_morph_1.json'
 
 
 if __name__=='__main__':
@@ -110,7 +110,7 @@ if __name__=='__main__':
         for m in range(masks.size(0)):
           mask = masks[m].numpy()
           label_img[np.where(mask==1)] = Cat_np[m][0]
-        cv2.imwrite(osp.join('/content/DATA/older_Data/labeled_data', Name), label_img)
+        cv2.imwrite(osp.join('/home/inspectrone/Jay/DATA/older_Data/labeled_data', Name), label_img)
 
 import os
 
@@ -122,35 +122,33 @@ def get_imlist(path, txt):
   data.close()
 
 
-source_list = get_imlist('/content/DATA/older_Data/labeled_data', '/content/sourcelist.txt')
+source_list = get_imlist('/home/inspectrone/Jay/DATA/older_Data/labeled_data', '/home/inspectrone/Jay/sourcelist.txt')
 
-olderlabel_img_path = '/content/DATA/older_Data/labeled_data'
 
 
 
 """young data"""
 
 
-img_path_young = '/content/DATA/young_Data/images'
-annotation_path = '/content/DATA/young_Data/images/simulated_corrosion_multi_class_1.json'
+img_path_young = '/home/inspectrone/Jay/DATA/young_Data/images'
+annotation_path = '/home/inspectrone/Jay/DATA/young_Data/simulated_corrosion_multi_class_1.json'
 
-if __name__=='__main__':
-  dataset = Data_Finder(img_path_young, annotation_path)
-  Info = DataLoader(dataset)
-  for img, label, name, Cat in Info:
-        img = np.uint8(img.squeeze().numpy().transpose(1, 2, 0))
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        Name = name[0].replace('image', 'label')
-        gt, masks, num_crowds = label
-        masks = masks.squeeze(0) 
-        label_img = np.zeros_like(gray)
-        Cat_np = []
-        for i in Cat:
-          Cat_np.append(i.numpy().reshape(-1))
-        for m in range(masks.size(0)):
-          mask = masks[m].numpy()
-          label_img[np.where(mask==1)] = Cat_np[m][0]
-        cv2.imwrite(osp.join('/content/DATA/young_Data/labeled_data', Name), label_img)
+dataset = Data_Finder(img_path_young, annotation_path)
+Info = DataLoader(dataset)
+for img, label, name, Cat in Info:
+    img = np.uint8(img.squeeze().numpy().transpose(1, 2, 0))
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    Name = name[0].replace('image', 'label')
+    gt, masks, num_crowds = label
+    masks = masks.squeeze(0)
+    label_img = np.zeros_like(gray)
+    Cat_np = []
+    for i in Cat:
+      Cat_np.append(i.numpy().reshape(-1))
+    for m in range(masks.size(0)):
+      mask = masks[m].numpy()
+      label_img[np.where(mask==1)] = Cat_np[m][0]
+    cv2.imwrite(osp.join('/home/inspectrone/Jay/DATA/young_Data/labeled_data', Name), label_img)
 
 #4 cat seam spot edge background
 
@@ -164,7 +162,7 @@ def get_imlist(path, txt):
   data.close()
 
 
-target_list = get_imlist('/content/DATA/young_Data/labeled_data', '/content/targetlist.txt')
+target_list = get_imlist('/home/inspectrone/Jay/DATA/young_Data/labeled_data', '/home/inspectrone/Jay/targetlist.txt')
 
 younglabel_img_path = '/content/DATA/young_Data/labeled_data'
 
