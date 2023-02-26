@@ -164,7 +164,6 @@ def get_imlist(path, txt):
 
 target_list = get_imlist('/home/inspectrone/Jay/DATA/young_Data/labeled_data', '/home/inspectrone/Jay/targetlist.txt')
 
-younglabel_img_path = '/content/DATA/young_Data/labeled_data'
 
 '''
 if __name__=='__main__':
