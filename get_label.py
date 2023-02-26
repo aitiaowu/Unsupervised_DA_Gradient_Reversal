@@ -8,7 +8,6 @@ import torchvision.transforms as transforms
 import cv2
 import numpy as np
 from pycocotools.coco import COCO
-from google.colab.patches import cv2_imshow
 from torch.utils.data import DataLoader
 
 class Transform(object):
