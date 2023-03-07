@@ -6,18 +6,16 @@ from data.old_dataset_label import oldDataSetLabel
 
 
 IMG_MEAN = np.array((0.0, 0.0, 0.0), dtype=np.float32)
-image_sizes = {'old': (672,376), 'young': (672,376)}
-AS_size_test = {'old': (672,376)}
+image_sizes = {'old': (672,376), 'young': (672,376),'reduce': (336,188)}
+AS_size_test = {'old': (672,376),'reduce': (336,188)}
 
 def CreateSrcDataLoader(args):
     if args.source == 'old':
-        source_dataset = youngDataSet( args.data_dir, args.data_list, crop_size=image_sizes['old'], 
-                                      resize=image_sizes['old'] ,mean=IMG_MEAN,
+        source_dataset = youngDataSet( args.data_dir, args.data_list, crop_size=image_sizes['reduce'], 
+                                      mean=IMG_MEAN,
                                       max_iters=args.num_steps * args.batch_size )
     else:
-        raise ValueError('The source dataset mush be either Blender or synthia')
-    
-    source_dataloader = data.DataLoader( source_dataset, 
+    	source_dataloader = data.DataLoader( source_dataset, 
                                          batch_size=args.batch_size,
                                          shuffle=True, 
                                          num_workers=args.num_workers, 
@@ -28,14 +26,14 @@ def CreateTrgDataLoader(args):
     if args.set == 'train' or args.set == 'trainval':
         target_dataset = oldDataSetLabel( args.data_dir_target, 
                                                  args.data_list_target, 
-                                                 crop_size=image_sizes['old'], 
+                                                 crop_size=image_sizes['reduce'], 
                                                  mean=IMG_MEAN, 
                                                  max_iters=args.num_steps * args.batch_size, 
                                                  set=args.set )
     else:
         target_dataset = oldDataSet( args.data_dir_target,
                                             args.data_list_target,
-                                            crop_size=AS_size_test['old'],
+                                            crop_size=AS_size_test['reduce'],
                                             mean=IMG_MEAN,
                                             set=args.set )
 

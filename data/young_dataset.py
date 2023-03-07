@@ -7,7 +7,7 @@ from torch.utils import data
 
 class youngDataSet(data.Dataset):
 
-    def __init__(self, root, list_path, crop_size=(11, 11), resize=(11, 11), ignore_label=255, mean=(128, 128, 128), max_iters=None):
+    def __init__(self, root, list_path, crop_size=(11, 11), resize=(11, 11), ignore_label=-1, mean=(128, 128, 128), max_iters=None):
         self.root = root  # folder for which contains subfolder images, labels
         self.list_path = list_path   # list of image names
         self.crop_size = crop_size   # dst size for resize
@@ -20,19 +20,21 @@ class youngDataSet(data.Dataset):
 
         self.files = []
 
-        #self.id_to_trainid = {0: 0, 1: 1, 2: 2, 3: 3}
-        self.id_to_trainid = {1: 0, 2: 1, 3: 2}
+        self.id_to_trainid = {0: 0, 1: 1, 2: 2, 3: 3}
+        #self.id_to_trainid = {1: 0, 2: 1, 3: 2}
     def __len__(self):
         return len(self.img_ids)
 
     def __getitem__(self, index):
         name = self.img_ids[index]
         Imgname = name.replace("label", "image")
+        #print(Imgname,name)
         image = Image.open(osp.join(self.root, "images/%s" % Imgname)).convert('RGB')
         label = Image.open(osp.join(self.root, "labeled_data/%s" % name))
         # resize
-        image = image.resize(self.resize, Image.BICUBIC)
-        label = label.resize(self.resize, Image.NEAREST)
+        #print('original size',image.size,label.size)
+        image = image.resize(self.crop_size, Image.BICUBIC)
+        label = label.resize(self.crop_size, Image.NEAREST)
 
         image = np.asarray(image, np.float32)
         label = np.asarray(label, np.float32)
@@ -45,7 +47,7 @@ class youngDataSet(data.Dataset):
         image = image[:, :, ::-1]  # change to BGR
         image -= self.mean
         image = image.transpose((2, 0, 1))
-        
+
 
         return image.copy(), label_copy.copy(), np.array(size), name
 

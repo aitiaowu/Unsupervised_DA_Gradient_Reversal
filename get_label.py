@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 from pycocotools.coco import COCO
 from torch.utils.data import DataLoader
+from PIL import Image
 
 class Transform(object):
     def __init__(self):
@@ -89,8 +90,8 @@ class Data_Finder(data.Dataset):
         return torch.from_numpy(img).permute(2, 0, 1), target, Mask, height, width, num_crowds, file_name, Cat
 
 img_path_older = '/home/inspectrone/Jay/DATA/older_Data/images'
-annotation_path = '/home/inspectrone/Jay/DATA/older_Data/simulated_corrosion_multi_class_no_morph_1.json'
-
+#img_path_older = '/home/inspectrone/Jay/DATA/older_Data_less/images'
+annotation_path = '/home/inspectrone/Jay/DATA/older_Data_less/simulated_corrosion_multi_class_1 (1).json'
 
 if __name__=='__main__':
     dataset = Data_Finder(img_path_older, annotation_path)
@@ -109,7 +110,8 @@ if __name__=='__main__':
         for m in range(masks.size(0)):
           mask = masks[m].numpy()
           label_img[np.where(mask==1)] = Cat_np[m][0]
-        cv2.imwrite(osp.join('/home/inspectrone/Jay/DATA/older_Data/labeled_data', Name), label_img)
+        
+        cv2.imwrite(osp.join('/home/inspectrone/Jay/DATA/older_Data_less/labeled_data', Name), label_img)
 
 import os
 
@@ -121,7 +123,7 @@ def get_imlist(path, txt):
   data.close()
 
 
-source_list = get_imlist('/home/inspectrone/Jay/DATA/older_Data/labeled_data', '/home/inspectrone/Jay/sourcelist.txt')
+source_list = get_imlist('/home/inspectrone/Jay/DATA/older_reduce', '/home/inspectrone/Jay/sourcelist_reduce.txt')
 
 
 
@@ -147,7 +149,8 @@ for img, label, name, Cat in Info:
     for m in range(masks.size(0)):
       mask = masks[m].numpy()
       label_img[np.where(mask==1)] = Cat_np[m][0]
-    cv2.imwrite(osp.join('/home/inspectrone/Jay/DATA/young_Data/labeled_data', Name), label_img)
+    
+    cv2.imwrite(osp.join('/home/inspectrone/Jay/DATA/young_Data_reduce', Name), label_img)
 
 #4 cat seam spot edge background
 
@@ -161,11 +164,27 @@ def get_imlist(path, txt):
   data.close()
 
 
-target_list = get_imlist('/home/inspectrone/Jay/DATA/young_Data/labeled_data', '/home/inspectrone/Jay/targetlist.txt')
+targetIMG_list = get_imlist('/home/inspectrone/Jay/DATA/young_reduce', '/home/inspectrone/Jay/target_reduce.txt')
+
 
 
 '''
+
+import json
+import os.path as osp
+from PIL import Image
+import torch.nn as nn
+from torch.autograd import Variable
+import torch
+import numpy as np
+from data import CreateTrgDataLoader
+from model import CreateModel
+import os
+from options.test_options import TestOptions
+import scipy.io as sio
 if __name__=='__main__':
+    image = '/home/inspectrone/Jay/DATA/older_Data_less/images'
+    info_json = '/home/inspectrone/Jay/DATA/old_img_less/simulated_corrosion_multi_class_1 (1).json'
     dataset = Data_Finder(image, info_json)
     loader = DataLoader(dataset)
     for img, label, name, Cat in loader:
@@ -180,5 +199,7 @@ if __name__=='__main__':
             mask = masks[m].numpy()
             y, x = np.where(mask == 1)
             img[y, x, :] = color[[Cat[m].numpy()][0] - 1]
-        cv2_imshow(img)
-        '''
+        cv2.imwrite('/home/inspectrone/Jay/DATA/test/ {}.png', img)
+        
+'''
+

@@ -47,13 +47,6 @@ def get_img_list(Path):
     return img_list
 
 def compute_mIoU( gt_dir, pred_dir, num_classes, devkit_dir='', restore_from='' ):
-    '''
-    with open( osp.join(devkit_dir, 'info.json'),'r' ) as fp:
-        info = json.load(fp)
-    num_classes = np.int(info['classes'])
-    print('Num classes', num_classes)
-    '''
-
 
     name_classes = np.array(['Seam', 'Edge', 'Spot'], dtype=np.str)
     #mapping = np.array( info['label2train'],dtype=np.int )
@@ -69,6 +62,7 @@ def compute_mIoU( gt_dir, pred_dir, num_classes, devkit_dir='', restore_from='' 
     for ind in range(len(gt_imgs)):
         pred  = np.array(Image.open(pred_imgs[ind]))
         label = np.array(Image.open(gt_imgs[ind]))
+        print('pred size:', pred.shape, 'label size:', label.shape)
         if len(label.flatten()) != len(pred.flatten()):
             print('Skipping: len(gt) = {:d}, len(pred) = {:d}, {:s}, {:s}'.format( len(label.flatten()), len(pred.flatten()), gt_imgs[ind], pred_imgs[ind] ))
             continue
@@ -87,8 +81,6 @@ def compute_mIoU( gt_dir, pred_dir, num_classes, devkit_dir='', restore_from='' 
         f.write('===> mIoU: ' + str(round(np.nanmean(mIoUs)*100,2)) + '\n')
 
     print('===> mIoU: ' + str(round(   np.nanmean(mIoUs)*100,2   )))
-    #print('===> mIoU16: ' + str(round(   np.mean(mIoUs[[0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 15, 17, 18]])*100,2   )))
-    #print('===> mIoU13: ' + str(round(   np.mean(mIoUs[[0, 1, 2, 6, 7, 8, 10, 11, 12, 13, 15, 17, 18]])*100,2   )))
 
 
 def main():
@@ -117,9 +109,9 @@ def main():
 
     targetloader = CreateTrgDataLoader(args)
 
-    IMG_MEAN = np.array((34.91212110, 145.54035585, 168.38381212), dtype=np.float32)
+    #IMG_MEAN = np.array((34.91212110, 145.54035585, 168.38381212), dtype=np.float32)
     #IMG_MEAN = np.array((27.69365370, 153.46831124, 174.91789185), dtype=np.float32)
-    #IMG_MEAN = np.array((9.8295929, 59.56474619, 75.43405386), dtype=np.float32)
+    IMG_MEAN = np.array((9.8295929, 59.56474619, 75.43405386), dtype=np.float32)
     IMG_MEAN = torch.reshape( torch.from_numpy(IMG_MEAN), (1,3,1,1)  )
     mean_img = torch.zeros(1, 1)
 
@@ -140,27 +132,28 @@ def main():
             # forward
             output1 = model1(image)
             output1 = nn.functional.softmax(output1, dim=1)
-            '''
-            output2 = model2(image)
-            output2 = nn.functional.sigmoid(output2, dim=1)
 
-            output3 = model3(image)
-            output3 = nn.functional.softmax(output3, dim=1)
-            '''
 
             #a, b = 0.3333, 0.3333
             #output = a*output1 + b*output2 + (1.0-a-b)*output3
             
             output = output1
-            output = nn.functional.interpolate(output, (376,672), mode='bilinear', align_corners=True).cpu().data[0].numpy()
+            output = nn.functional.interpolate(output, (188,336), mode='bilinear', align_corners=True).cpu().data[0].numpy()
             output = output.transpose(1,2,0)
 
             output_nomask = np.asarray( np.argmax(output, axis=2), dtype=np.uint8 )
-            output_col = colorize_mask(output_nomask)
+            output_col = colorize_mask(output_nomask) 
+            '''
+            gt = [osp.join(args.gt_dir, x) for x in get_img_list(args.gt_dir)]
+            for ind in range(len(gt)):
+            	label = np.array(Image.open(gt[ind]))
+            	output_col = colorize_mask(label)
+            	output_col.save(  '%s/%s.png' % (args.save, ind)  ) 
+            '''
             output_nomask = Image.fromarray(output_nomask)    
             name = name[0].split('/')[-1]
             #output_nomask.save(  '%s/%s' % (args.save, name)  )
-            #output_col.save(  '%s/%s.png' % (args.save, name.split('.')[0])  ) 
+            output_col.save(  '%s/%s.png' % (args.save, name.split('.')[0])  ) 
     # scores computed and saved
     # ------------------------------------------------- #
     print('---------Compute IoU------------------')

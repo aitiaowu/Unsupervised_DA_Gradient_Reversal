@@ -8,12 +8,12 @@ affine_par = True
 
 class ReverseLayer(Function):
 
-    
+    @staticmethod
     def forward(ctx, x, lamda):
         ctx.lamda = lamda
         return x.view_as(x)
 
-    
+    @staticmethod
     def backward(ctx, grad_output):
         output = grad_output.neg() * ctx.lamda
         return output, None
@@ -120,12 +120,32 @@ class Classifier_Module(nn.Module):
 
         return out
 
+'''
+class Classifier_Module_Domain(nn.Module):
+    def __init__(self, inplanes, dilation_series, padding_series, num_classes):
+        super(Classifier_Module_Domain, self).__init__()
+        self.conv2d_list = nn.ModuleList()
+        for dilation, padding in zip(dilation_series, padding_series):
+            self.conv2d_list.append(
+                nn.Conv2d(inplanes, num_classes, kernel_size=3, stride=1, padding=padding, dilation=dilation, bias=True))
+        for m in self.conv2d_list:
+            m.weight.data.normal_(0, 0.01)
+
+    def forward(self, x, alpha):
+
+        reverse_feature = ReverseLayer.apply(x, alpha)
+        out = self.conv2d_list[0](reverse_feature)
+        for i in range(len(self.conv2d_list) - 1):
+            out += self.conv2d_list[i + 1](x)
+
+        return out
+'''
 
 class Domain_Classifier(nn.Module):
     def __init__(self, inplanes, domain_class):
         super(Domain_Classifier, self).__init__()
         self.conv1 = nn.Conv2d(inplanes, 16, 1)
-        self.fullyConnected1 = nn.Sequential(nn.Linear(65280, 1000),
+        self.fullyConnected1 = nn.Sequential(nn.Linear(16512, 1000), # 16512 65280
                                             nn.BatchNorm1d(1000, affine=affine_par)
                                             )
         
@@ -136,7 +156,7 @@ class Domain_Classifier(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         
     def forward(self, x, alpha):
-        out = self.conv1(x)   ####
+        out = self.conv1(x)
         out = out.view(out.size(0), -1)
         #print(out.size())
         #aaaaaaaaa
@@ -208,7 +228,7 @@ class ResNet101(nn.Module):
         return nn.Sequential(*layers)
 
     def _make_pred_layer(self, block, inplanes, dilation_series, padding_series, num_classes):
-        return block(inplanes, dilation_series, padding_series, 3)
+        return block(inplanes, dilation_series, padding_series, num_classes)
 
     #def _make_pred_layer_Domain(self, block, inplanes, dilation_series, padding_series, num_classes):
     #    return block(inplanes, dilation_series, padding_series, num_classes)
@@ -218,6 +238,7 @@ class ResNet101(nn.Module):
 
     def forward(self, x, alpha=None, seg_lbl=None, domain_lbl=None, weight=None):
         _, _, h, w = x.size()
+        #print(h,w)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -226,25 +247,39 @@ class ResNet101(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         features = self.layer4(x)
-        features_copy = features
+        features_copy = features.clone()
         seg_prediction = self.layer5(features)
 
 
         if self.phase == 'train':
-
-
             seg_prediction = nn.functional.interpolate(seg_prediction, size=(h, w), mode='bilinear', align_corners=True)
             if seg_lbl is not None:
-                #print('the weight is', weight)
+                self.loss_seg = F.cross_entropy(seg_prediction, seg_lbl, weight=weight, ignore_index=-1)
                 #self.loss_seg = self.CrossEntropy2d(seg_prediction, seg_lbl, weight=weight)
-                self.loss_seg = F.cross_entropy(seg_prediction, seg_lbl,ignore_index=255)
             
-            #### Doamin is the whole image 
+            
+            #### Doamin is the whole image  
             if alpha is not None:
-                domain_prediction = self.layer6(features_copy, alpha) ####
-                if domain_lbl is not None:       
-                  self.domain_loss = F.cross_entropy(domain_prediction, domain_lbl,ignore_index=255)
-        
+                domain_prediction = self.layer6(features_copy, alpha)
+                if domain_lbl is not None:
+                    #self.domain_loss = F.cross_entropy(domain_prediction, domain_lbl)
+                    self.domain_loss = F.cross_entropy(domain_prediction, domain_lbl)
+          
+            
+            '''
+            #### Doamin is the each pixel  
+            if alpha is not None:
+                domain_prediction = self.layer7(features_copy, alpha)
+                domain_prediction = nn.functional.interpolate(domain_prediction, size=(h, w), mode='bilinear', align_corners=True)
+                if domain_lbl is not None:
+                    #print(domain_prediction.size())
+                    #print(domain_lbl.size())
+                    #print(domain_prediction)
+                    #print(domain_lbl)
+                    #aaaaa
+                    self.domain_loss = F.cross_entropy(domain_prediction, domain_lbl)
+            '''
+
         return seg_prediction
 
     def get_1x_lr_params_NOscale(self):
@@ -301,10 +336,8 @@ class ResNet101(nn.Module):
             return Variable(torch.zeros(1))
         predict = predict.transpose(1, 2).transpose(2, 3).contiguous()
         predict = predict[target_mask.view(n, h, w, 1).repeat(1, 1, 1, c)].view(-1, c)
-        
-        loss = F.cross_entropy(predict, target, weight=weight, size_average=size_average,ignore_index=0)
 
-
+        loss = F.cross_entropy(predict, target, weight=weight, size_average=size_average, ignore_index=-1)
 
         return loss    
 

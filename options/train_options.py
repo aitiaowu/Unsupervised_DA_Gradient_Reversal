@@ -3,34 +3,42 @@ import os.path as osp
 
 class TrainOptions():
     def initialize(self):
-        parser = argparse.ArgumentParser( description="training script for FDA" )
-        parser.add_argument("--model", type=str, default='our_model', help="available options : DeepLab and VGG")
-        parser.add_argument("--LB", type=float, default=0.1, help="beta for FDA")
+        parser = argparse.ArgumentParser( description="training script for GR" )
+        parser.add_argument("--model", type=str, default='our_model')
+        parser.add_argument("--LB", type=float, default=0.1, help="beta")
         parser.add_argument("--GPU", type=str, default='0', help="which GPU to use")
         parser.add_argument("--entW", type=float, default=0.005, help="weight for entropy")
         parser.add_argument("--ita", type=float, default=2.0, help="ita for robust entropy")
         parser.add_argument("--switch2entropy", type=int, default=500000, help="switch to entropy after this many steps")
 
-        parser.add_argument("--source", type=str, default='old', help="source dataset : Blender")
-        parser.add_argument("--target", type=str, default='young', help="target dataset : AIRsim")
-        parser.add_argument("--snapshot-dir", type=str, default='/content/drive/MyDrive/Study/Domain_Adaptation_Vessel/Reverse/Reverse_DA/checkpoints', help="Where to save snapshots of the model.")
-        parser.add_argument("--data-dir", type=str, default='/content/DATA/older_Data', help="Path to the directory containing the source dataset.")
-        parser.add_argument("--data-list", type=str, default='/content/sourcelist.txt', help="Path to the listing of images in the source dataset.")
-        parser.add_argument("--data-dir-target", type=str, default='/content/DATA/young_Data', help="Path to the directory containing the target dataset.")
-        parser.add_argument("--data-list-target", type=str, default='/content/targetlist.txt', help="list of images in the target dataset.")
+        parser.add_argument("--source", type=str, default='old', help="source dataset : old")
+        parser.add_argument("--target", type=str, default='young', help="target dataset : young")
+        parser.add_argument("--snapshot-dir", type=str, default='/home/inspectrone/Jay/Unsupervised_DA_Gradient_Reversal/checkpoints', help="Where to save snapshots of the model.")
+        #parser.add_argument("--data-dir", type=str, default='/home/inspectrone/Jay/DATA/older_Data', help="Path to the directory containing the source dataset.")
+        #parser.add_argument("--data-list", type=str, default='/home/inspectrone/Jay/sourcelist.txt', help="Path to the listing of images in the source dataset.")
+
+        parser.add_argument("--data-dir", type=str, default='/home/inspectrone/Jay/DATA/older_Data_less', help="Path to the directory containing the source dataset.")
+        parser.add_argument("--data-list", type=str, default='/home/inspectrone/Jay/sourcelist_less.txt', help="Path to the listing of images in the source dataset.")
+
+
+        parser.add_argument("--data-dir-target", type=str, default='/home/inspectrone/Jay/DATA/young_Data', help="Path to the directory containing the target dataset.")
+        parser.add_argument("--data-list-target", type=str, default='/home/inspectrone/Jay/targetlist.txt', help="list of images in the target dataset.")
         parser.add_argument("--set", type=str, default='train', help="choose adaptation set.")
         parser.add_argument("--label-folder", type=str, default=None, help="Path to the directory containing the pseudo labels.")
 
-        parser.add_argument("--batch-size", type=int, default=8, help="input batch size.")
-        parser.add_argument("--num-steps", type=int, default=55000, help="Number of training steps.")
-        parser.add_argument("--num-steps-stop", type=int, default=100000, help="Number of training steps for early stopping.")
+        parser.add_argument("--batch-size", type=int, default=3, help="input batch size.")
+
+        #parser.add_argument("--num-steps", type=int, default=260000, help="Number of training steps.")
+        parser.add_argument("--num-steps", type=int, default=50000, help="Number of training steps.")
+
+        parser.add_argument("--num-steps-stop", type=int, default=300000, help="Number of training steps for early stopping.")
         parser.add_argument("--num-workers", type=int, default=3, help="number of threads.")
         parser.add_argument("--learning-rate", type=float, default=1e-4, help="initial learning rate for the segmentation network.")
         parser.add_argument("--momentum", type=float, default=0.9, help="Momentum component of the optimiser.")
         parser.add_argument("--weight-decay", type=float, default=0.0005, help="Regularisation parameter for L2-loss.")
         parser.add_argument("--power", type=float, default=0.9, help="Decay parameter to compute the learning rate (only for deeplab).")
 
-        parser.add_argument("--num-classes", type=int, default=3, help="Number of classes for cityscapes.")
+        parser.add_argument("--num-classes", type=int, default=4, help="Number of classes for cityscapes.")
         parser.add_argument("--init-weights", type=str, default=None, help="initial model.")
         parser.add_argument("--restore-from", type=str, default=None, help="Where restore model parameters from.")
 

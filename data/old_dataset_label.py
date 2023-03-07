@@ -7,8 +7,8 @@ from torch.utils import data
 
 class oldDataSetLabel(data.Dataset):
     
-    def __init__(self, root, list_path, crop_size=(11, 11), mean=(128, 128, 128), max_iters=None, set='val'):
-        self.root = root    # AIRsim
+    def __init__(self, root, list_path, crop_size=(11, 11), mean=(128, 128, 128), max_iters=None, set='vel'):
+        self.root = root    
         self.list_path = list_path # list of image names
         self.crop_size = crop_size
         self.mean = mean
@@ -17,19 +17,20 @@ class oldDataSetLabel(data.Dataset):
             self.img_ids = self.img_ids * int( np.ceil(float(max_iters)/len(self.img_ids)) )
 
         self.files = []
-        self.ignore_label = 255
+        self.ignore_label = -1
         self.set = set
 
-        #self.id_to_trainid = {0: 0, 1: 1, 2: 2, 3: 3}
-        self.id_to_trainid = {1: 0, 2: 1, 3: 2}
+        self.id_to_trainid = {0: 0, 1: 1, 2: 2, 3: 3}
+        #self.id_to_trainid = {1: 0, 2: 1, 3: 2}
     def __len__(self):
         return len(self.img_ids)
 
     def __getitem__(self, index):
         name = self.img_ids[index]
-        img_name = name.replace('label', 'image')  
+        img_name = name.replace("label", "image")
+
         image = Image.open(osp.join( self.root, "images/%s" % img_name   )).convert('RGB')
-        #lbname = name.replace("frame", "image_")
+       
         label = Image.open(osp.join( self.root, "labeled_data/%s" % name   ))
         
         # resize
@@ -48,7 +49,7 @@ class oldDataSetLabel(data.Dataset):
         image -= self.mean
         image = image.transpose((2, 0, 1))
         '''
-        for m in range(0,4):
+        for m in range(-1,4):
           cnt=0
           for i in range( label_copy.shape[0]):
               for j in range ( label_copy.shape[1]):

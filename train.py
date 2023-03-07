@@ -10,9 +10,12 @@ from model import CreateModel
 import torch.backends.cudnn as cudnn
 import torch
 from torch.autograd import Variable
-#from utils import FDA_source_to_target
 import scipy.io as sio
-from tqdm.notebook import tqdm
+import torch
+from torch.utils.tensorboard import SummaryWriter
+
+
+
 
 IMG_MEAN_trg = np.array((34.91212110, 145.54035585, 168.38381212), dtype=np.float32)
 #IMG_MEAN_trg = np.array((27.69365370, 153.46831124, 174.91789185), dtype=np.float32)
@@ -20,11 +23,12 @@ IMG_MEAN_src = np.array((9.8295929, 59.56474619, 75.43405386), dtype=np.float32)
 
 IMG_MEAN_trg = torch.reshape( torch.from_numpy(IMG_MEAN_trg), (1,3,1,1)  )
 IMG_MEAN_src = torch.reshape( torch.from_numpy(IMG_MEAN_src), (1,3,1,1)  )
-#CS_weights = np.array( (1, 1, 1.1166), dtype=np.float32 )
-#CS_weights = np.array( (1, 1.5,1.5), dtype=np.float32 )
-CS_weights = np.array( (1, 1, 1), dtype=np.float32 )
+
+CS_weights = np.array( (0.003, 0.41, 0.46, 1), dtype=np.float32 )
+
 CS_weights = torch.from_numpy(CS_weights)
 
+writer = SummaryWriter()
 
 def main():
     opt = TrainOptions()
@@ -83,12 +87,11 @@ def main():
         ##print('mean_img:{}'.format(mean_img.shape))
         src_img = src_img.clone() - mean_img_src                                 
         trg_img = trg_img.clone() - mean_img_trg 
-
-        #src_domain_lbl = torch.zeros(B, H, W)
-        #trg_domain_lbl = torch.ones(B, H, W)                                
+                                
         src_domain_lbl = torch.zeros(B)
-        trg_domain_lbl = torch.ones(B)                                
-
+        trg_domain_lbl = torch.ones(B)
+        #src_domain_lbl = torch.zeros(B,2)
+        #trg_domain_lbl = torch.ones(B,2)
 
         #-------------------------------------------------------------------#
         # evaluate and update params #####
@@ -114,36 +117,42 @@ def main():
         loss_domain = loss_domain_src + loss_domain_trg
         loss_all = loss_seg_src + (loss_domain_src + loss_domain_trg)     
         #loss_all = loss_seg_src
+
+	
+	
         
         loss_all.backward()
         optimizer.step()
 
         loss_train += loss_seg_src.detach().cpu().numpy() ## .detach():Return a "Variable" which will not be updated
         loss_val   += loss_seg_trg.detach().cpu().numpy()
+
+	###tensorboard
+        writer.add_scalar("Loss_val/train", loss_val, i)
+        writer.add_scalar("Loss_seg/train", loss_seg_src, i)
+        writer.add_scalar("Loss_all/train", loss_all, i)
+        writer.flush()
         
         
             
         if (i+1) % args.print_freq == 0:  ## Show loss every "print_freq" times
             _t['iter time'].toc(average=False)   ## Return traning time, time is a def function
 
-            
+            #print('[it %d][src_seg_loss %.4f][loss_all %.4f][loss_val %.4f]' %\(i+1, loss_seg_src.data, loss_all.data, loss_val.data))
             print('[it %d][src seg loss %.4f][domain loss %.4f][loss_all %.4f][loss_val %.4f][lr %.4f][%.2fs]' % \
                     (i + 1, loss_seg_src.data, loss_domain.data, loss_all.data, loss_seg_trg.data, optimizer.param_groups[0]['lr']*10000, _t['iter time'].diff) )
 
-            if (i+1) >= 22000  and loss_seg_src.data <=0.05: 
-            #if (i+1) >= 1  :
+            if (i+1) >= 20000  and loss_seg_src.data <=0.05: 
+            #if (i+1) >= 1 and ((i+1) % 200)==0 :
                 print('taking snapshot in process ...')
-                torch.save( model.state_dict(), os.path.join(args.snapshot_dir, 'new' + str(i+1) + '.pth') )  
+                torch.save( model.state_dict(), os.path.join(args.snapshot_dir, 'alpha1_3' + str(i+1) + '.pth') )
+
+            if (i+1) % 1000  ==0 : 
+            #if (i+1) >= 1 and ((i+1) % 200)==0 :
+                print('taking snapshot in process ...')
+                torch.save( model.state_dict(), os.path.join(args.snapshot_dir, 'alpha1_3' + str(i+1) + '.pth') )
+  
                 
-            '''          
-            print('[it %d][src seg loss %.4f][lr %.4f][%.2fs]' % \
-                    (i + 1, loss_seg_src.data, optimizer.param_groups[0]['lr']*10000, _t['iter time'].diff) )
-   
-            if (i+1) >= 4000 and loss_seg_src.data <=0.04: 
-                print('taking snapshot in process ...')
-                torch.save( model.state_dict(), os.path.join(args.snapshot_dir, '%s_' % (args.source) + str(i+1) + '.pth') )
-            '''
-         
             sio.savemat(args.tempdata, {'src_img':src_img.cpu().numpy(), 'trg_img':trg_img.cpu().numpy()})
 
             loss_train /= args.print_freq
@@ -162,4 +171,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
 
