@@ -254,8 +254,13 @@ class ResNet101(nn.Module):
         if self.phase == 'train':
             seg_prediction = nn.functional.interpolate(seg_prediction, size=(h, w), mode='bilinear', align_corners=True)
             if seg_lbl is not None:
-                self.loss_seg = F.cross_entropy(seg_prediction, seg_lbl, weight=weight, ignore_index=-1)
-                #self.loss_seg = self.CrossEntropy2d(seg_prediction, seg_lbl, weight=weight)
+                #seg_prediction = torch.sigmoid(seg_prediction)
+                #print(seg_prediction.shape,seg_lbl.shape)
+                #aaa
+                #self.loss_seg = F.binary_cross_entropy_with_logits(seg_prediction, seg_lbl, weight=weight)
+
+                self.loss_seg = F.cross_entropy(seg_prediction, seg_lbl, weight=weight)
+                #self.loss_seg = self.CrossEntropy2d(seg_prediction, seg_lbl, weight=weight) #3classes
             
             
             #### Doamin is the whole image  
@@ -337,18 +342,18 @@ class ResNet101(nn.Module):
         predict = predict.transpose(1, 2).transpose(2, 3).contiguous()
         predict = predict[target_mask.view(n, h, w, 1).repeat(1, 1, 1, c)].view(-1, c)
 
-        loss = F.cross_entropy(predict, target, weight=weight, size_average=size_average, ignore_index=-1)
+        loss = F.cross_entropy(predict, target, weight=weight, size_average=size_average)
 
         return loss    
 
-def ResNet(num_classes=3, init_weights=None, restore_from=None, phase='train'):
+def ResNet(num_classes=4, init_weights=None, restore_from=None, phase='train'):
     model = ResNet101(Bottleneck, [3, 4, 23, 3], num_classes, phase)
     if init_weights is not None:
         saved_state_dict = torch.load(init_weights, map_location=lambda storage, loc: storage)
         new_params = model.state_dict().copy()
         for i in saved_state_dict:
             i_parts = i.split('.')
-            if not num_classes == 3 or not i_parts[1] == 'layer5':
+            if not num_classes == 4 or not i_parts[1] == 'layer5':
                 new_params['.'.join(i_parts[1:])] = saved_state_dict[i]
                 #new_params[i] = saved_state_dict[i]
         model.load_state_dict(new_params)

@@ -13,7 +13,6 @@ import scipy.io as sio
 
 # color coding of semantic classes
 
-
 palette = [0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255]
 zero_pad = 256 * 3 - len(palette)
 for i in range(zero_pad):
@@ -47,6 +46,13 @@ def get_img_list(Path):
     return img_list
 
 def compute_mIoU( gt_dir, pred_dir, num_classes, devkit_dir='', restore_from='' ):
+    '''
+    with open( osp.join(devkit_dir, 'info.json'),'r' ) as fp:
+        info = json.load(fp)
+    num_classes = np.int(info['classes'])
+    print('Num classes', num_classes)
+    '''
+
 
     name_classes = np.array(['Seam', 'Edge', 'Spot'], dtype=np.str)
     #mapping = np.array( info['label2train'],dtype=np.int )
@@ -62,15 +68,17 @@ def compute_mIoU( gt_dir, pred_dir, num_classes, devkit_dir='', restore_from='' 
     for ind in range(len(gt_imgs)):
         pred  = np.array(Image.open(pred_imgs[ind]))
         label = np.array(Image.open(gt_imgs[ind]))
-        print('pred size:', pred.shape, 'label size:', label.shape)
+        
+        #print('pred:',pred.shape,'label:',label.shape)
+
         if len(label.flatten()) != len(pred.flatten()):
             print('Skipping: len(gt) = {:d}, len(pred) = {:d}, {:s}, {:s}'.format( len(label.flatten()), len(pred.flatten()), gt_imgs[ind], pred_imgs[ind] ))
             continue
         hist += fast_hist(label.flatten(), pred.flatten(), num_classes)
         if ind > 0 and ind % 10 == 0:
-            with open(restore_from+'_mIoU.txt', 'a') as f:
-                f.write( '{:d} / {:d}: {:0.2f}\n'.format(ind, len(gt_imgs), 100*np.mean(per_class_iu(hist))) )
-            #print('{:d} / {:d}: {:0.2f}'.format(ind, len(gt_imgs), 100*np.mean(per_class_iu(hist))))
+            #with open(restore_from+'_mIoU.txt', 'a') as f:
+                #f.write( '{:d} / {:d}: {:0.2f}\n'.format(ind, len(gt_imgs), 100*np.mean(per_class_iu(hist))) )
+            print('{:d} / {:d}: {:0.2f}'.format(ind, len(gt_imgs), 100*np.mean(per_class_iu(hist))))
  
     mIoUs = per_class_iu(hist)
     for ind_class in range(num_classes):
@@ -80,13 +88,17 @@ def compute_mIoU( gt_dir, pred_dir, num_classes, devkit_dir='', restore_from='' 
     with open(restore_from+'_mIoU.txt', 'a') as f:
         f.write('===> mIoU: ' + str(round(np.nanmean(mIoUs)*100,2)) + '\n')
 
-    print('===> mIoU: ' + str(round(   np.nanmean(mIoUs)*100,2   )))
+    print('===> mIoU3: ' + str(round(   np.nanmean(mIoUs)*100,2   )))
+
 
 
 def main():
     opt = TestOptions()
     args = opt.initialize()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.GPU
+
+    #compute_mIoU( args.gt_dir, args.save, args.num_classes, args.devkit_dir, args.restore_from )
+    #aaa
 
     if not os.path.exists(args.save):
         os.makedirs(args.save)
@@ -109,9 +121,9 @@ def main():
 
     targetloader = CreateTrgDataLoader(args)
 
-    #IMG_MEAN = np.array((34.91212110, 145.54035585, 168.38381212), dtype=np.float32)
+    IMG_MEAN = np.array((34.91212110, 145.54035585, 168.38381212), dtype=np.float32)
     #IMG_MEAN = np.array((27.69365370, 153.46831124, 174.91789185), dtype=np.float32)
-    IMG_MEAN = np.array((9.8295929, 59.56474619, 75.43405386), dtype=np.float32)
+    #IMG_MEAN = np.array((9.8295929, 59.56474619, 75.43405386), dtype=np.float32)
     IMG_MEAN = torch.reshape( torch.from_numpy(IMG_MEAN), (1,3,1,1)  )
     mean_img = torch.zeros(1, 1)
 
@@ -119,7 +131,7 @@ def main():
     # compute scores and save them
     with torch.no_grad():
         for index, batch in enumerate(targetloader):
-            if index % 2000 == 0:
+            if index % 100 == 0:
                 print( '%d processd' % index )
             image, _, name = batch                              # 1. get image
             # create mean image
@@ -131,29 +143,31 @@ def main():
  
             # forward
             output1 = model1(image)
-            output1 = nn.functional.softmax(output1, dim=1)
+            output1 = nn.functional.sigmoid(output1)
 
+            #output1 = model1(image)
+            #output1 = nn.functional.softmax(output2, dim=1)
+
+            #output3 = model3(image)
+            #output3 = nn.functional.softmax(output3, dim=1)
+            
 
             #a, b = 0.3333, 0.3333
             #output = a*output1 + b*output2 + (1.0-a-b)*output3
             
             output = output1
-            output = nn.functional.interpolate(output, (188,336), mode='bilinear', align_corners=True).cpu().data[0].numpy()
+            output = nn.functional.interpolate(output, (376,672), mode='bilinear', align_corners=True).cpu().data[0].numpy()
+
             output = output.transpose(1,2,0)
 
             output_nomask = np.asarray( np.argmax(output, axis=2), dtype=np.uint8 )
-            output_col = colorize_mask(output_nomask) 
-            '''
-            gt = [osp.join(args.gt_dir, x) for x in get_img_list(args.gt_dir)]
-            for ind in range(len(gt)):
-            	label = np.array(Image.open(gt[ind]))
-            	output_col = colorize_mask(label)
-            	output_col.save(  '%s/%s.png' % (args.save, ind)  ) 
-            '''
-            output_nomask = Image.fromarray(output_nomask)    
+            output_col = colorize_mask(output_nomask)
+            output_nomask = Image.fromarray(output_nomask)
+            output_nomask = output_nomask.resize((188*2,336*2),Image.NEAREST) 
+   
             name = name[0].split('/')[-1]
-            #output_nomask.save(  '%s/%s' % (args.save, name)  )
-            output_col.save(  '%s/%s.png' % (args.save, name.split('.')[0])  ) 
+            output_nomask.save(  '%s/%s' % (args.save, name)  )
+            output_col.save(  '%s/%s_color.png' % (args.save, name.split('.')[0])  ) 
     # scores computed and saved
     # ------------------------------------------------- #
     print('---------Compute IoU------------------')

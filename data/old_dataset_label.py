@@ -17,7 +17,7 @@ class oldDataSetLabel(data.Dataset):
             self.img_ids = self.img_ids * int( np.ceil(float(max_iters)/len(self.img_ids)) )
 
         self.files = []
-        self.ignore_label = -1
+        self.ignore_label = 255
         self.set = set
 
         self.id_to_trainid = {0: 0, 1: 1, 2: 2, 3: 3}

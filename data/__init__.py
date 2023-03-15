@@ -14,8 +14,8 @@ def CreateSrcDataLoader(args):
         source_dataset = youngDataSet( args.data_dir, args.data_list, crop_size=image_sizes['reduce'], 
                                       mean=IMG_MEAN,
                                       max_iters=args.num_steps * args.batch_size )
-    else:
-    	source_dataloader = data.DataLoader( source_dataset, 
+
+    source_dataloader = data.DataLoader( source_dataset, 
                                          batch_size=args.batch_size,
                                          shuffle=True, 
                                          num_workers=args.num_workers, 

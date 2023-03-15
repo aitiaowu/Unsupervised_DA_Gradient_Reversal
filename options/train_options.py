@@ -14,22 +14,22 @@ class TrainOptions():
         parser.add_argument("--source", type=str, default='old', help="source dataset : old")
         parser.add_argument("--target", type=str, default='young', help="target dataset : young")
         parser.add_argument("--snapshot-dir", type=str, default='/home/inspectrone/Jay/Unsupervised_DA_Gradient_Reversal/checkpoints', help="Where to save snapshots of the model.")
-        #parser.add_argument("--data-dir", type=str, default='/home/inspectrone/Jay/DATA/older_Data', help="Path to the directory containing the source dataset.")
-        #parser.add_argument("--data-list", type=str, default='/home/inspectrone/Jay/sourcelist.txt', help="Path to the listing of images in the source dataset.")
+        parser.add_argument("--data-dir", type=str, default='/home/inspectrone/Jay/DATA/older_Data', help="Path to the directory containing the source dataset.")
+        parser.add_argument("--data-list", type=str, default='/home/inspectrone/Jay/sourcelist.txt', help="Path to the listing of images in the source dataset.")
 
-        parser.add_argument("--data-dir", type=str, default='/home/inspectrone/Jay/DATA/older_Data_less', help="Path to the directory containing the source dataset.")
-        parser.add_argument("--data-list", type=str, default='/home/inspectrone/Jay/sourcelist_less.txt', help="Path to the listing of images in the source dataset.")
+        #parser.add_argument("--data-dir", type=str, default='/home/inspectrone/Jay/DATA/older_Data_less', help="Path to the directory containing the source dataset.")
+        #parser.add_argument("--data-list", type=str, default='/home/inspectrone/Jay/sourcelist_less.txt', help="Path to the listing of images in the source dataset.")
 
 
-        parser.add_argument("--data-dir-target", type=str, default='/home/inspectrone/Jay/DATA/young_Data', help="Path to the directory containing the target dataset.")
-        parser.add_argument("--data-list-target", type=str, default='/home/inspectrone/Jay/targetlist.txt', help="list of images in the target dataset.")
+        parser.add_argument("--data-dir-target", type=str, default='/home/inspectrone/Jay/DATA/young_train', help="Path to the directory containing the target dataset.")
+        parser.add_argument("--data-list-target", type=str, default='/home/inspectrone/Jay/target_train.txt', help="list of images in the target dataset.")
         parser.add_argument("--set", type=str, default='train', help="choose adaptation set.")
         parser.add_argument("--label-folder", type=str, default=None, help="Path to the directory containing the pseudo labels.")
 
         parser.add_argument("--batch-size", type=int, default=3, help="input batch size.")
 
-        #parser.add_argument("--num-steps", type=int, default=260000, help="Number of training steps.")
-        parser.add_argument("--num-steps", type=int, default=50000, help="Number of training steps.")
+        parser.add_argument("--num-steps", type=int, default=80000, help="Number of training steps.")
+        #parser.add_argument("--num-steps", type=int, default=50000, help="Number of training steps.")
 
         parser.add_argument("--num-steps-stop", type=int, default=300000, help="Number of training steps for early stopping.")
         parser.add_argument("--num-workers", type=int, default=3, help="number of threads.")
@@ -43,7 +43,7 @@ class TrainOptions():
         parser.add_argument("--restore-from", type=str, default=None, help="Where restore model parameters from.")
 
         parser.add_argument("--save-pred-every", type=int, default=1000, help="Save summaries and checkpoint every often.")
-        parser.add_argument("--print-freq", type=int, default=5, help="print loss and time fequency.")
+        parser.add_argument("--print-freq", type=int, default=10, help="print loss and time fequency.")
         parser.add_argument("--matname", type=str, default='loss_log.mat', help="mat name to save loss")
         parser.add_argument("--tempdata", type=str, default='tempdata.mat', help="mat name to save data")
 

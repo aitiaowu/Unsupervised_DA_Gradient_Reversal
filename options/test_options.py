@@ -6,15 +6,15 @@ class TestOptions():
         parser.add_argument("--model", type=str, default='our_model', help="available option")
         parser.add_argument("--GPU", type=str, default='0', help="which GPU to use")
 
-        #parser.add_argument("--data-dir-target", type=str, default='/home/inspectrone/Jay/DATA/older_Data/images', help="Path to the directory containing the target dataset.")
-        #parser.add_argument("--data-list-target", type=str, default='/home/inspectrone/Jay/sourcelist.txt', help="list of images in the target dataset.")
+        parser.add_argument("--data-dir-target", type=str, default='/home/inspectrone/Jay/DATA/young_Data/images', help="Path to the directory containing the target dataset.")
+        parser.add_argument("--data-list-target", type=str, default='/home/inspectrone/Jay/targetlist.txt', help="list of images in the target dataset.")
 
-        parser.add_argument("--data-dir-target", type=str, default='/home/inspectrone/Jay/DATA/older_Data_less/images', help="Path to the directory containing the source dataset.")
-        parser.add_argument("--data-list-target", type=str, default='/home/inspectrone/Jay/sourcelist_less.txt', help="Path to the listing of images in the source dataset.")
+        #parser.add_argument("--data-dir-target", type=str, default='/home/inspectrone/Jay/DATA/older_Data_less/images', help="Path to the directory containing the source dataset.")
+        #parser.add_argument("--data-list-target", type=str, default='/home/inspectrone/Jay/sourcelist_less.txt', help="Path to the listing of images in the source dataset.")
 
         parser.add_argument("--num-classes", type=int, default=4, help="Number of classes.")
         parser.add_argument("--set", type=str, default='val', help="choose test set.")
-        parser.add_argument("--restore-opt1", type=str, default='/home/inspectrone/Jay/Unsupervised_DA_Gradient_Reversal/checkpoints/alphav10000', help="restore model parameters from beta1")
+        parser.add_argument("--restore-opt1", type=str, default='/home/inspectrone/Jay/Unsupervised_DA_Gradient_Reversal/checkpoints/alpha0.1_class3201020', help="restore model parameters from beta1")
         parser.add_argument("--restore-opt2", type=str, default=None, help="restore model parameters from beta2")
         parser.add_argument("--restore-opt3", type=str, default=None, help="restore model parameters from beta3")
 
@@ -22,10 +22,10 @@ class TestOptions():
         parser.add_argument("--restore-from", type=str, default=None, help="restore model parameters from")
 
         parser.add_argument("--save", type=str, default='/home/inspectrone/Jay/GR_result', help="Path to save result.")
-        #parser.add_argument('--gt_dir', type=str, default='/home/inspectrone/Jay/DATA/older_Data/labeled_data', help='directory for val gt images')
-        #parser.add_argument('--devkit_dir', type=str, default='/home/inspectrone/Jay/sourcelist.txt', help='list directory') 
-        parser.add_argument('--gt_dir', type=str, default='/home/inspectrone/Jay/DATA/older_Data_less/labeled_data', help='directory for val gt images')
-        parser.add_argument('--devkit_dir', type=str, default='/home/inspectrone/Jay/sourcelist_less.txt', help='list directory')
+        parser.add_argument('--gt_dir', type=str, default='/home/inspectrone/Jay/DATA/young_Data/labeled_data', help='directory for val gt images')
+        parser.add_argument('--devkit_dir', type=str, default='/home/inspectrone/Jay/targetlist.txt', help='list directory') 
+        #parser.add_argument('--gt_dir', type=str, default='/home/inspectrone/Jay/DATA/older_Data_less/labeled_data', help='directory for val gt images')
+        #parser.add_argument('--devkit_dir', type=str, default='/home/inspectrone/Jay/sourcelist_less.txt', help='list directory')
         
 
         return parser.parse_args()

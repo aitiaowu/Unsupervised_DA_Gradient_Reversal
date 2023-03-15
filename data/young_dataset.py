@@ -7,7 +7,7 @@ from torch.utils import data
 
 class youngDataSet(data.Dataset):
 
-    def __init__(self, root, list_path, crop_size=(11, 11), resize=(11, 11), ignore_label=-1, mean=(128, 128, 128), max_iters=None):
+    def __init__(self, root, list_path, crop_size=(11, 11), resize=(11, 11), ignore_label=255, mean=(128, 128, 128), max_iters=None):
         self.root = root  # folder for which contains subfolder images, labels
         self.list_path = list_path   # list of image names
         self.crop_size = crop_size   # dst size for resize

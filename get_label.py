@@ -68,28 +68,29 @@ class Data_Finder(data.Dataset):
         file_name = self.coco.loadImgs(img_id)[0]['file_name']
         path = osp.join(self.root, file_name)
         img = cv2.imread(path)
-        height, width, _ = img.shape
+        if img is not None:
+            height, width, _ = img.shape
           
-        if len(target) > 0: 
-            Cat = []
-            Mask = self.coco.annToMask(target[0]).reshape(-1)
-            for obj in target:
-              mask = self.coco.annToMask(obj).reshape(-1)
-              cat = obj['category_id']
+            if len(target) > 0: 
+                Cat = []
+                Mask = self.coco.annToMask(target[0]).reshape(-1)
+                for obj in target:
+                  mask = self.coco.annToMask(obj).reshape(-1)
+                  cat = obj['category_id']
 
-              if cat not in Cat:
-                Cat.append(cat)
-                Mask = np.vstack((Mask, mask))
-              else:
-                Mask[-1] = Mask[-1] + mask
+                  if cat not in Cat:
+                    Cat.append(cat)
+                    Mask = np.vstack((Mask, mask))
+                  else:
+                    Mask[-1] = Mask[-1] + mask
               
-            Mask = Mask.reshape(-1, height, width)
-            Mask = Mask[1:]
-        if self.target_transform is not None and len(target) > 0:
-            target = self.target_transform(target, width, height)
+                Mask = Mask.reshape(-1, height, width)
+                Mask = Mask[1:]
+            if self.target_transform is not None and len(target) > 0:
+                target = self.target_transform(target, width, height)
         return torch.from_numpy(img).permute(2, 0, 1), target, Mask, height, width, num_crowds, file_name, Cat
-
-img_path_older = '/home/inspectrone/Jay/DATA/older_Data/images'
+'''
+img_path_older = '/home/inspectrone/Jay/DATA/older_Data_less/images'
 #img_path_older = '/home/inspectrone/Jay/DATA/older_Data_less/images'
 annotation_path = '/home/inspectrone/Jay/DATA/older_Data_less/simulated_corrosion_multi_class_1 (1).json'
 
@@ -110,6 +111,7 @@ if __name__=='__main__':
         for m in range(masks.size(0)):
           mask = masks[m].numpy()
           label_img[np.where(mask==1)] = Cat_np[m][0]
+
         
         cv2.imwrite(osp.join('/home/inspectrone/Jay/DATA/older_Data_less/labeled_data', Name), label_img)
 
@@ -127,16 +129,16 @@ source_list = get_imlist('/home/inspectrone/Jay/DATA/older_reduce', '/home/inspe
 
 
 
-
 """young data"""
 
 
-img_path_young = '/home/inspectrone/Jay/DATA/young_Data/images'
+img_path_young = '/home/inspectrone/Jay/DATA/young_val/images'
 annotation_path = '/home/inspectrone/Jay/DATA/young_Data/simulated_corrosion_multi_class_1.json'
 
 dataset = Data_Finder(img_path_young, annotation_path)
 Info = DataLoader(dataset)
 for img, label, name, Cat in Info:
+  if img is not None:
     img = np.uint8(img.squeeze().numpy().transpose(1, 2, 0))
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     Name = name[0].replace('image', 'label')
@@ -149,12 +151,13 @@ for img, label, name, Cat in Info:
     for m in range(masks.size(0)):
       mask = masks[m].numpy()
       label_img[np.where(mask==1)] = Cat_np[m][0]
-    
-    cv2.imwrite(osp.join('/home/inspectrone/Jay/DATA/young_Data_reduce', Name), label_img)
+    #print(label_img)
+    #label_img = label_img.resize((188,336))
+    cv2.imwrite(osp.join('/home/inspectrone/Jay/DATA/young_val/labeled_data', Name), label_img)
 
 #4 cat seam spot edge background
 
-import os
+'''
 
 def get_imlist(path, txt):
   data = open(txt, 'w+')
@@ -164,11 +167,11 @@ def get_imlist(path, txt):
   data.close()
 
 
-targetIMG_list = get_imlist('/home/inspectrone/Jay/DATA/young_reduce', '/home/inspectrone/Jay/target_reduce.txt')
-
+targetIMG_list = get_imlist('/home/inspectrone/Jay/DATA/young_val/labeled_data', '/home/inspectrone/Jay/target_val.txt')
 
 
 '''
+
 
 import json
 import os.path as osp
