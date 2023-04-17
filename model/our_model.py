@@ -120,31 +120,11 @@ class Classifier_Module(nn.Module):
 
         return out
 
-'''
-class Classifier_Module_Domain(nn.Module):
-    def __init__(self, inplanes, dilation_series, padding_series, num_classes):
-        super(Classifier_Module_Domain, self).__init__()
-        self.conv2d_list = nn.ModuleList()
-        for dilation, padding in zip(dilation_series, padding_series):
-            self.conv2d_list.append(
-                nn.Conv2d(inplanes, num_classes, kernel_size=3, stride=1, padding=padding, dilation=dilation, bias=True))
-        for m in self.conv2d_list:
-            m.weight.data.normal_(0, 0.01)
-
-    def forward(self, x, alpha):
-
-        reverse_feature = ReverseLayer.apply(x, alpha)
-        out = self.conv2d_list[0](reverse_feature)
-        for i in range(len(self.conv2d_list) - 1):
-            out += self.conv2d_list[i + 1](x)
-
-        return out
-'''
 
 class Domain_Classifier(nn.Module):
     def __init__(self, inplanes, domain_class):
         super(Domain_Classifier, self).__init__()
-        self.conv1 = nn.Conv2d(inplanes, 16, 1)
+        self.conv1 = nn.Conv2d(inplanes, 16, 1)# 1024-512 maxpool 512-16
         self.fullyConnected1 = nn.Sequential(nn.Linear(16512, 1000), # 16512 65280
                                             nn.BatchNorm1d(1000, affine=affine_par)
                                             )
@@ -259,8 +239,8 @@ class ResNet101(nn.Module):
                 #aaa
                 #self.loss_seg = F.binary_cross_entropy_with_logits(seg_prediction, seg_lbl, weight=weight)
 
-                self.loss_seg = F.cross_entropy(seg_prediction, seg_lbl, weight=weight)
-                #self.loss_seg = self.CrossEntropy2d(seg_prediction, seg_lbl, weight=weight) #3classes
+                #self.loss_seg = F.cross_entropy(seg_prediction, seg_lbl, weight=weight)
+                self.loss_seg = self.CrossEntropy2d(seg_prediction, seg_lbl, weight=weight) #3classes
             
             
             #### Doamin is the whole image  
@@ -268,7 +248,7 @@ class ResNet101(nn.Module):
                 domain_prediction = self.layer6(features_copy, alpha)
                 if domain_lbl is not None:
                     #self.domain_loss = F.cross_entropy(domain_prediction, domain_lbl)
-                    self.domain_loss = F.cross_entropy(domain_prediction, domain_lbl)
+                    self.domain_loss = 5 * F.cross_entropy(domain_prediction, domain_lbl)
           
             
             '''

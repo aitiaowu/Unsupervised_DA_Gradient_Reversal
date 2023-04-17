@@ -30,7 +30,7 @@ IMG_MEAN_src = np.array((9.8295929, 59.56474619, 75.43405386), dtype=np.float32)
 IMG_MEAN_trg = torch.reshape( torch.from_numpy(IMG_MEAN_trg), (1,3,1,1)  )
 IMG_MEAN_src = torch.reshape( torch.from_numpy(IMG_MEAN_src), (1,3,1,1)  )
 
-CS_weights = np.array( (0.01, 1.23, 1.38, 3.6), dtype=np.float32 )
+CS_weights = np.array( (0.008, 1.23, 1.38, 3.6), dtype=np.float32 )
 
 CS_weights = torch.from_numpy(CS_weights)
 
@@ -73,14 +73,17 @@ def main():
     val_src_loader_iter, val_trg_loader_iter = iter(val_src_loader), iter(val_trg_loader)
     print(len(val_src_loader_iter))
 # model
+
     model, optimizer = CreateModel(args)
 
     start_iter = 0
-    if args.restore_from is not None:
-        start_iter = int(args.restore_from.rsplit('/', 1)[1].rsplit('_')[1])
+    #if args.restore_from is not None:
+       #start_iter = int(args.restore_from.rsplit('/', 1)[1].rsplit('_')[1])
 
     cudnn.enabled = True
     cudnn.benchmark = True
+
+
 
     model.train() ## Put model in train model(including Dropout and Batch Normalization)
     model.cuda()
@@ -126,10 +129,10 @@ def main():
         #-------------------------------------------------------------------#
         # evaluate and update params #####
         src_img, src_lbl, src_domain_lbl = Variable(src_img).cuda(), Variable(src_lbl.long()).cuda(), Variable(src_domain_lbl.long()).cuda() # to gpu
-        #alpha = (2/(1+np.exp(-10 * i))) - 1
         #alpha = 1
-        alpha = 0
-        #alpha = 10
+        alpha = 10
+        #alpha = 100
+
         #print('src_img: {}, src_lbl: {}'.format(src_img.shape, src_lbl.shape))
         src_seg_score = model(src_img, alpha, seg_lbl=src_lbl, domain_lbl=src_domain_lbl, weight=class_weights)      # forward pass
         #src_seg_score = model(src_img, alpha=None, seg_lbl=src_lbl, domain_lbl=None, weight=class_weights)      # forward pass
@@ -144,10 +147,11 @@ def main():
         loss_seg_trg = model.loss_seg
         loss_domain_trg = model.domain_loss
         
-        loss_domain = loss_domain_src + loss_domain_trg
-        loss_all = loss_seg_src + 0*(loss_domain_src + loss_domain_trg)     
+        loss_domain = (loss_domain_src + loss_domain_trg)
+        
+        loss_all = loss_seg_src + loss_domain   
         #loss_all = loss_seg_src
-
+        
 	
 	
         
@@ -157,7 +161,7 @@ def main():
         loss_train += loss_seg_src.detach().cpu().numpy() ## .detach():Return a "Variable" which will not be updated
         loss_val += loss_seg_trg.detach().cpu().numpy()
 
-
+        '''
         if (i+1) % 1000 == 0:
             model.eval()
             model.cuda()
@@ -176,13 +180,13 @@ def main():
                     val_src_loss += F.cross_entropy(output,label,weight=class_weights).item()
             val_src_loss /= len(val_src_loader.dataset)            
 
-
+        '''
 
 
 	###tensorboard
-        writer.add_scalar("Loss_src_val/train", val_src_loss, i)
-        writer.add_scalar("Loss_trg_val/train", val_trg_loss, i)
-        writer.add_scalar("Loss_train/train", loss_train, i)
+        writer.add_scalar("Loss_src_val/train", loss_train, i)
+        writer.add_scalar("Loss_trg_val/train", loss_val, i)
+        #writer.add_scalar("Loss_train/train", loss_val, i)
         writer.flush()
         
         
@@ -195,11 +199,12 @@ def main():
             #print('[it %d][src_seg_loss %.4f][loss_all %.4f][loss_val %.4f]' %\(i+1, loss_seg_src.data, loss_all.data, loss_val.data))
             print('[it %d][src seg loss %.4f][domain loss %.4f][loss_all %.4f][loss_val %.4f][lr %.4f][%.2fs]' % \
                     (i + 1, loss_seg_src.data, loss_domain.data, loss_all.data, loss_seg_trg.data, optimizer.param_groups[0]['lr']*10000, _t['iter time'].diff) )
+            #print('iter ', i+1)
 
-            if (i+1) >= 20000  and loss_seg_src.data <=0.08: 
-            #if (i+1) >= 1 and ((i+1) % 200)==0 :
+            #if (i+1) >= 10000  and loss_seg_src.data <=0.05: 
+            if (i+1) >= 10000 and loss_val<=0.1 :
                 print('taking snapshot in process ...')
-                torch.save( model.state_dict(), os.path.join(args.snapshot_dir, 'Sourceonly_class4' + str(i+1) + '.pth') )
+                torch.save( model.state_dict(), os.path.join(args.snapshot_dir, 'DA_class4_' + str(i+1) + '.pth') )
 
   
                 

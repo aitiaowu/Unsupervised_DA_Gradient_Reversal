@@ -12,7 +12,6 @@ from options.test_options import TestOptions
 import scipy.io as sio
 
 # color coding of semantic classes
-
 palette = [0, 0, 0, 255, 0, 0, 0, 255, 0, 0, 0, 255]
 zero_pad = 256 * 3 - len(palette)
 for i in range(zero_pad):
@@ -54,7 +53,7 @@ def compute_mIoU( gt_dir, pred_dir, num_classes, devkit_dir='', restore_from='' 
     '''
 
 
-    name_classes = np.array(['background','Seam', 'Edge', 'Spot'], dtype=np.str)
+    name_classes = np.array(['background', 'Seam', 'Edge', 'Spot'], dtype=np.str)
     #mapping = np.array( info['label2train'],dtype=np.int )
     hist = np.zeros( (num_classes, num_classes) )
 
@@ -66,11 +65,12 @@ def compute_mIoU( gt_dir, pred_dir, num_classes, devkit_dir='', restore_from='' 
     gt_imgs = [osp.join(gt_dir, x) for x in label_path_list]
     
     for ind in range(len(gt_imgs)):
+        #pred_img = Image.open(pred_imgs[ind])
+        #pred_img = pred_img.resize((376,672), Image.ANTIALIAS)
+        #pred  = np.array(pred_img)
         pred  = np.array(Image.open(pred_imgs[ind]))
         label = np.array(Image.open(gt_imgs[ind]))
         
-        #print('pred:',pred.shape,'label:',label.shape)
-
         if len(label.flatten()) != len(pred.flatten()):
             print('Skipping: len(gt) = {:d}, len(pred) = {:d}, {:s}, {:s}'.format( len(label.flatten()), len(pred.flatten()), gt_imgs[ind], pred_imgs[ind] ))
             continue
@@ -88,8 +88,7 @@ def compute_mIoU( gt_dir, pred_dir, num_classes, devkit_dir='', restore_from='' 
     with open(restore_from+'_mIoU.txt', 'a') as f:
         f.write('===> mIoU: ' + str(round(np.nanmean(mIoUs)*100,2)) + '\n')
 
-    print('===> mIoU3: ' + str(round(   np.nanmean(mIoUs)*100,2   )))
-
+    print('===> mIoU4: ' + str(round(   np.nanmean(mIoUs)*100,2   )))
 
 
 def main():
@@ -97,13 +96,11 @@ def main():
     args = opt.initialize()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.GPU
 
-    #compute_mIoU( args.gt_dir, args.save, args.num_classes, args.devkit_dir, args.restore_from )
-    #aaa
-
     if not os.path.exists(args.save):
         os.makedirs(args.save)
 
     args.restore_from = args.restore_opt1
+
     model1 = CreateModel(args)
     model1.eval()
     model1.cuda()
@@ -143,28 +140,25 @@ def main():
  
             # forward
             output1 = model1(image)
-            output1 = nn.functional.softmax(output1)
+            output1 = nn.functional.softmax(output1, dim=1)
+            '''
+            output2 = model2(image)
+            output2 = nn.functional.softmax(output2, dim=1)
 
-            #output1 = model1(image)
-            #output1 = nn.functional.softmax(output2, dim=1)
-
-            #output3 = model3(image)
-            #output3 = nn.functional.softmax(output3, dim=1)
-            
+            output3 = model3(image)
+            output3 = nn.functional.softmax(output3, dim=1)
+            '''
 
             #a, b = 0.3333, 0.3333
             #output = a*output1 + b*output2 + (1.0-a-b)*output3
             
             output = output1
             output = nn.functional.interpolate(output, (376,672), mode='bilinear', align_corners=True).cpu().data[0].numpy()
-
             output = output.transpose(1,2,0)
 
             output_nomask = np.asarray( np.argmax(output, axis=2), dtype=np.uint8 )
             output_col = colorize_mask(output_nomask)
-            output_nomask = Image.fromarray(output_nomask)
-            output_nomask = output_nomask.resize((188*2,336*2),Image.NEAREST) 
-   
+            output_nomask = Image.fromarray(output_nomask)    
             name = name[0].split('/')[-1]
             output_nomask.save(  '%s/%s' % (args.save, name)  )
             output_col.save(  '%s/%s_color.png' % (args.save, name.split('.')[0])  ) 
